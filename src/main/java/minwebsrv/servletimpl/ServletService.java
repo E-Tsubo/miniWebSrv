@@ -1,5 +1,7 @@
 package minwebsrv.servletimpl;
 
+import static java.lang.System.*;
+
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -15,14 +17,18 @@ import minwebsrv.util.SendResponse;
 public class ServletService {
 
 	private static HttpServlet createServlet( ServletInfo info ) throws Exception {
+
+		// デバッグコード
+		out.println( "--" + "Create Servlet Instance : " + info.servletClassName );
+
 		Class<?> clazz = info.webApp.classLoader.loadClass(info.servletClassName);
 		return (HttpServlet)clazz.newInstance();
 	}
 
 	// ServerThreadから起動されるメソッド
 	public static void doService(String method, String query, ServletInfo info,
-            Map<String, String> requestHeader,
-            InputStream input, OutputStream output) throws Exception {
+            						Map<String, String> requestHeader,
+            						InputStream input, OutputStream output) throws Exception {
 
 		// 初回呼び出し時にサーブレットのインスタンスを作成
 		if (info.servlet == null) {
@@ -55,7 +61,9 @@ public class ServletService {
 		}
 
 		// サーブレットのメイン処理を起動
-		// 本メソッド内で、doGET/doPOSTに分岐される
+		// minwebsrv/servlet/http/httpservletを継承していれば、
+		// serviceメソッド内で、doGET/doPOSTに分岐され、
+		// WebApp側で実装された処理が起動される
 		info.servlet.service(req, resp);
 
 		// ステータス200を返却

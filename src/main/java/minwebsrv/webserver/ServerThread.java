@@ -1,5 +1,7 @@
 package minwebsrv.webserver;
 
+import static java.lang.System.*;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
@@ -35,6 +37,8 @@ class ServerThread implements Runnable {
 
 	private Socket socket;
 
+	private static int thread_num = 0;
+
 	ServerThread(Socket socket) {
 
 		this.socket = socket;
@@ -52,6 +56,10 @@ class ServerThread implements Runnable {
 
 	@Override
 	public void run() {
+
+		// デバッグコード
+		int threaqd_num_saved = ++thread_num;
+		out.println( "-Create Thread Num " + threaqd_num_saved );
 
 		OutputStream output = null;
 
@@ -120,17 +128,19 @@ class ServerThread implements Runnable {
 			}
 
 
-			// レスポンスようにアウトプットストリームを用意
+			// レスポンス用にアウトプットストリームを用意
 			output = new BufferedOutputStream(socket.getOutputStream());
 
+			// 要求URLに対応したWebアプリケーションを検索
 			String appDir = path.substring(1).split("/")[0];
             WebApplication webApp = WebApplication.searchWebApplication(appDir);
             if (webApp != null) {
+            	// Webアプリケーション内から、アクセス先となっているサーブレットをロード
                 ServletInfo servletInfo
                     = webApp.searchServlet(path.substring(appDir.length() + 1));
                 if (servletInfo != null) {
-                    ServletService.doService(method, query, servletInfo,
-                                             requestHeader, input, output);
+                	// サーブレットの処理を実行
+                    ServletService.doService(method, query, servletInfo, requestHeader, input, output);
                     return;
                 }
             }
@@ -193,6 +203,9 @@ class ServerThread implements Runnable {
 					output.close();
 				}
 				socket.close();
+
+				// デバッグコード
+				out.println( "|->Close Thread Num " + threaqd_num_saved );
 
 			} catch (Exception ex) {
 				ex.printStackTrace();

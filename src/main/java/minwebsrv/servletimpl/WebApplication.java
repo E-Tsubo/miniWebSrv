@@ -25,6 +25,7 @@ public class WebApplication {
     // 複数のサーブレット利用可能
     private Map<String, ServletInfo> servletCollection = new HashMap<String, ServletInfo>();
 
+    // 該当パス上のClassファイルをロードする処理を公司とラスタで実行
     private WebApplication(String dir) throws MalformedURLException {
         this.directory = dir;
         FileSystem fs = FileSystems.getDefault();

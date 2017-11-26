@@ -27,6 +27,7 @@ public class Main {
 				Socket socket = server.accept();
 
 				// クライアントソケットを渡して、サーバスレッドを起動
+				// ソケットへの通信が来るたびにスレッドが作成される
 				ServerThread serverThread = new ServerThread( socket );
 				Thread thread = new Thread( serverThread );
 				thread.start();
