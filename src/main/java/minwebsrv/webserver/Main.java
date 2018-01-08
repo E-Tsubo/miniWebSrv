@@ -18,7 +18,17 @@ public class Main {
 		app.addServlet("/ShowBBS", "ShowBBS");
         app.addServlet("/PostBBS", "PostBBS");
 
-		try( ServerSocket server = new ServerSocket(8001) ){
+        // ServletコンテナにWebApplicationサーブレットを登録
+        // Cookie対応版
+        WebApplication app2 = WebApplication.createInstance( "cookietest" );
+        app2.addServlet("/CookieTest", "CookieTest");
+
+        // ServletコンテナにWebApplicationサーブレットを登録
+        // Cookie対応版
+        WebApplication app3 = WebApplication.createInstance( "sessiontest" );
+        app3.addServlet("/SessionTest", "SessionTest");
+
+        try( ServerSocket server = new ServerSocket(8001) ){
 
 			for( ;; ) {
 

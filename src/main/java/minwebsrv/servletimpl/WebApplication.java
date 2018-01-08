@@ -25,6 +25,9 @@ public class WebApplication {
     // 複数のサーブレット利用可能
     private Map<String, ServletInfo> servletCollection = new HashMap<String, ServletInfo>();
 
+    // セッション対応
+    private SessionManager sessionManager;
+
     // 該当パス上のClassファイルをロードする処理を公司とラスタで実行
     private WebApplication(String dir) throws MalformedURLException {
         this.directory = dir;
@@ -53,5 +56,12 @@ public class WebApplication {
 
     public static WebApplication searchWebApplication(String dir) {
         return webAppCollection.get(dir);
+    }
+
+    SessionManager getSessionManager() {
+        if (this.sessionManager == null) {
+            this.sessionManager = new SessionManager();
+        }
+        return this.sessionManager;
     }
 }

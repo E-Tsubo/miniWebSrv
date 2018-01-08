@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 
+import minwebsrv.servlet.http.Cookie;
 import minwebsrv.servlet.http.HttpServletResponse;
 
 //サーブレットへHTTPレスポンスの情報を格納するためのクラス実装.
@@ -17,6 +19,8 @@ public class HttpServletResponseImpl implements HttpServletResponse {
     PrintWriter printWriter;
     int status;
     String redirectLocation;
+    // Cookie対応で追加
+    ArrayList<Cookie> cookies = new ArrayList<Cookie>();
 
     @Override
     public void setContentType(String contentType) {
@@ -52,6 +56,11 @@ public class HttpServletResponseImpl implements HttpServletResponse {
     @Override
     public void setStatus(int sc) {
         this.status = sc;
+    }
+
+    @Override
+    public void addCookie(Cookie cookie) {
+        this.cookies.add(cookie);
     }
 
     HttpServletResponseImpl(OutputStream output) {

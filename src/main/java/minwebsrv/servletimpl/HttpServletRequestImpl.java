@@ -1,11 +1,12 @@
 package minwebsrv.servletimpl;
-
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-import minwebsrv.util.*;
+import minwebsrv.servlet.http.Cookie;
 import minwebsrv.servlet.http.HttpServletRequest;
+import minwebsrv.servlet.http.HttpSession;
+import minwebsrv.util.MyURLDecoder;
 
 // サーブレットへHTTPリクエストの情報を格納するためのクラス実装.
 // 雛形である"HttpServletRequest"を継承してメソッドをオーバーライドしている.
@@ -14,6 +15,13 @@ public class HttpServletRequestImpl implements HttpServletRequest {
 	private String method;
     private String characterEncoding = "ISO-8859-1";
     private Map<String, String[]> parameterMap;
+    // Cookie対応
+    private Cookie[] cookies;
+    // Session対応
+    private HttpSessionImpl session;
+    private HttpServletResponseImpl response;
+    private WebApplication webApp;
+    private final String SESSION_COOKIE_ID = "JSESSIONID";
 
     @Override
     public String getMethod() {
@@ -55,9 +63,87 @@ public class HttpServletRequestImpl implements HttpServletRequest {
         this.characterEncoding = env;
     }
 
-    HttpServletRequestImpl(String method,
-                           Map<String, String[]> parameterMap) {
+    @Override
+    public Cookie[] getCookies() {
+        return this.cookies;
+    }
+
+    private static Cookie[] parseCookies(String cookieString) {
+        if (cookieString == null) {
+            return null;
+        }
+        String[] cookiePairArray = cookieString.split(";");
+        Cookie[] ret = new Cookie[cookiePairArray.length];
+        int cookieCount = 0;
+
+        for (String cookiePair : cookiePairArray) {
+            String[] pair = cookiePair.split("=", 2);
+
+            ret[cookieCount] = new Cookie(pair[0], pair[1]);
+            cookieCount++;
+        }
+
+        return ret;
+    }
+
+    public HttpSession getSession() {
+        return getSession(true);
+    }
+
+    public HttpSession getSession(boolean create) {
+        if (!create) {
+            return this.session;
+        }
+        if (this.session == null) {
+            SessionManager manager = this.webApp.getSessionManager();
+            this.session = manager.createSession();
+            addSessionCookie();
+        }
+        return this.session;
+    }
+
+    private HttpSessionImpl getSessionInternal() {
+        if (this.cookies == null) {
+            return null;
+        }
+        Cookie cookie = null;
+        for (Cookie tempCookie : this.cookies) {
+            if (tempCookie.getName().equals(SESSION_COOKIE_ID)) {
+                cookie = tempCookie;
+            }
+        }
+        SessionManager manager = this.webApp.getSessionManager();
+        HttpSessionImpl ret = null;
+        if (cookie != null) {
+            ret = manager.getSession(cookie.getValue());
+        }
+        return ret;
+    }
+
+    private void addSessionCookie() {
+        Cookie cookie = new Cookie(SESSION_COOKIE_ID,
+                                   this.session.getId());
+        cookie.setPath("/" + webApp.directory + "/");
+        cookie.setHttpOnly(true);
+        this.response.addCookie(cookie);
+    }
+
+    HttpServletRequestImpl(String method, Map<String, String> requestHeader,
+                           Map<String, String[]> parameterMap,
+                           HttpServletResponseImpl resp,
+                           WebApplication webApp) {
         this.method = method;
         this.parameterMap = parameterMap;
+
+        // Cookie対応
+        this.cookies = parseCookies(requestHeader.get("COOKIE"));
+
+        // Session対応
+        this.response = resp;
+        this.webApp = webApp;
+        this.session = getSessionInternal();
+        if (this.session != null) {
+            addSessionCookie();
+        }
     }
 }

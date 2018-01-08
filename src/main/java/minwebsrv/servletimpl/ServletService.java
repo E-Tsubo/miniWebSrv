@@ -12,6 +12,7 @@ import minwebsrv.servlet.http.HttpServlet;
 import minwebsrv.servlet.http.HttpServletRequest;
 import minwebsrv.servlet.http.HttpServletResponse;
 import minwebsrv.util.Constants;
+import minwebsrv.util.ResponseHeaderGenerator;
 import minwebsrv.util.SendResponse;
 
 public class ServletService {
@@ -45,7 +46,8 @@ public class ServletService {
 			// GETリクエストのクエリストリングをMap型変数に格納して、サーブレットメソッドへ引き渡し
 			Map<String, String[]> map;
 			map = stringToMap(query);
-			req = new HttpServletRequestImpl("GET", map);
+			//req = new HttpServletRequestImpl("GET", map);
+			req = new HttpServletRequestImpl("GET", requestHeader, map, resp, info.webApp); // Cookie解釈のため
 		}
 		else if (method.equals("POST")) {
 			// POSTリクエストのボディの情報をContent-Lengthで指定されたバイト数読み込み
@@ -54,7 +56,8 @@ public class ServletService {
 			Map<String, String[]> map;
 			String line = readToSize(input, contentLength);
 			map = stringToMap(line);
-			req = new HttpServletRequestImpl("POST", map);
+			//req = new HttpServletRequestImpl("POST", map);
+			req = new HttpServletRequestImpl("POST", requestHeader, map, resp, info.webApp); // Cookie解釈のため
 		}
 		else {
 			throw new AssertionError("BAD METHOD:" + method);
@@ -68,7 +71,11 @@ public class ServletService {
 
 		// ステータス200を返却
 		if (resp.status == HttpServletResponse.SC_OK) {
-			SendResponse.sendOkResponseHeader(output, resp.contentType);
+			// Cookieヘッダの作成
+			ResponseHeaderGenerator hg
+            = new ResponseHeaderGeneratorImpl(resp.cookies);
+
+			SendResponse.sendOkResponseHeader(output, resp.contentType, hg);
 			resp.printWriter.flush();
 			byte[] outputBytes = outputBuffer.toByteArray();
 			for (byte b: outputBytes) {
